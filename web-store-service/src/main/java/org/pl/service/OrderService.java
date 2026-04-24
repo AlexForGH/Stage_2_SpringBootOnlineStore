@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class OrderService {
@@ -20,12 +21,13 @@ public class OrderService {
     }
 
     @Transactional()
-    public Mono<Order> createOrder(BigDecimal totalAmount) {
+    public Mono<Order> createOrder(BigDecimal totalAmount, UUID userId) {
         return generateNextOrderNumber()
                 .map(orderNumber -> new Order(
                         orderNumber,
                         totalAmount,
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        userId
                 ))
                 .flatMap(orderRepository::save);
     }

@@ -1,11 +1,8 @@
 package org.pl.controller;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.pl.dao.Item;
 import org.pl.dao.Order;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.MediaType;
 import reactor.core.publisher.Mono;
 
@@ -23,13 +20,21 @@ import static org.pl.controller.Actions.*;
 
 class CartControllerTest extends ControllerIntegrationTest {
 
-    @Autowired
-    private ApplicationContext context;
+    @Test
+    void shouldReturn401_WhenAccessingCartWithoutAuth() {
+        unauthenticatedClient().get()
+                .uri(cartAction)
+                .exchange()
+                .expectStatus().isFound() // Редирект на login
+                .expectHeader().valueMatches("Location", ".*/login.*|.*/oauth2/authorization/.*");
+    }
 
-    @BeforeEach
-    void setUp() {
-        // Проверяем, что контроллер зарегистрирован
-        assertThat(context.getBean(CartController.class)).isNotNull();
+    @Test
+    void shouldReturn401_WhenBuyingWithoutAuth() {
+        unauthenticatedClient().post()
+                .uri(buyAction)
+                .exchange()
+                .expectStatus().isFound(); // Редирект на login
     }
 
     @Test
@@ -82,7 +87,24 @@ class CartControllerTest extends ControllerIntegrationTest {
     }
 
     @Test
-    void testUpdateItemQuantity() {
+    void testEmptyCartRendering() {
+        when(sessionItemsCountsService.getCartItems(any())).thenReturn(Mono.just(Map.of()));
+        when(cartService.getItemsByItemsCounts(any())).thenReturn(Mono.just(List.of()));
+        when(cartService.getTotalItemsSum(any())).thenReturn(Mono.just(BigDecimal.ZERO));
+
+        webTestClient.get()
+                .uri(cartAction)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .value(html -> {
+                    // Проверяем что страница отрендерилась
+                    assertThat(html).contains("cart");
+                });
+    }
+
+    @Test
+    void testUpdateItemQuantity_Plus() {
         when(sessionItemsCountsService.updateItemCount(any(), eq(5L), eq("PLUS")))
                 .thenReturn(Mono.empty());
 
@@ -97,15 +119,46 @@ class CartControllerTest extends ControllerIntegrationTest {
     }
 
     @Test
+    void testUpdateItemQuantity_Minus() {
+        when(sessionItemsCountsService.updateItemCount(any(), eq(5L), eq("MINUS")))
+                .thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri(cartAction)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("id=5&action=MINUS")
+                .exchange()
+                .expectHeader().location(cartAction);
+
+        verify(sessionItemsCountsService).updateItemCount(any(), eq(5L), eq("MINUS"));
+    }
+
+    @Test
+    void testUpdateItemQuantity_Remove() {
+        when(sessionItemsCountsService.updateItemCount(any(), eq(5L), eq("REMOVE")))
+                .thenReturn(Mono.empty());
+
+        webTestClient.post()
+                .uri(cartAction)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .bodyValue("id=5&action=REMOVE")
+                .exchange()
+                .expectHeader().location(cartAction);
+
+        verify(sessionItemsCountsService).updateItemCount(any(), eq(5L), eq("REMOVE"));
+    }
+
+    @Test
     void testCompleteBuyingItems() {
         Order order = new Order(
                 "ORD-2024-100",
                 new BigDecimal("2999.99"),
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                TEST_USER_ID
         );
         order.setId(100L);
 
-        when(cartService.createSaveOrders(any())).thenReturn(Mono.just(order));
+        when(cartService.createSaveOrders(any(), eq(TEST_USER_ID))).thenReturn(Mono.just(order));
 
         webTestClient.post()
                 .uri(buyAction)
@@ -119,11 +172,12 @@ class CartControllerTest extends ControllerIntegrationTest {
         Order order = new Order(
                 "ORD-2024-101",
                 new BigDecimal("1299.99"),
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                TEST_USER_ID
         );
         order.setId(101L);
 
-        when(cartService.createSaveOrder(eq(8L), any()))
+        when(cartService.createSaveOrder(eq(8L), any(), eq(TEST_USER_ID)))
                 .thenReturn(Mono.just(order));
 
         webTestClient.post()

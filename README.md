@@ -1,12 +1,13 @@
-# Stage_2_SpringBootOnlineStore
+# Stage_2_4_SpringBootReactiveWebOnlineStoreWithRESTfulAPIOpenAPIAndRedisAndSecurity
 
 ![Демо работы](./demo.gif)
 
 ## *EN*
-#### The project demonstrates development capabilities using Spring Boot on a reactive technology stack with the development of a RESTful service, Open API specification and caching via Redis: Spring WebFlux, Spring Data R2DBC, RESTful API, Open API, Spring Data Redis
-#### Technology stack: Spring Framework, Spring Boot, H2DB, HTML, Thymeleaf, Spring WebFlux, Spring Data R2DBC, Docker (Multi Stage Build), Docker Compose, RESTful API, Open API, Spring Data Redis
+#### The project demonstrates development capabilities using Spring Boot on a reactive technology stack with the development of a RESTful service, Open API specification, caching via Redis and security through Spring Security and Keycloak: Spring WebFlux, Spring Data R2DBC, RESTful API, Open API, Spring Data Redis, Spring Security, Keycloak
+#### Technology stack: Spring Framework, Spring Boot, H2DB, HTML, Thymeleaf, Spring WebFlux, Spring Data R2DBC, Docker (Multi Stage Build), Docker Compose, RESTful API, Open API, Spring Data Redis, Spring Security, Keycloak
 
 ### Application features:
+    - user self-registration
     - filling the shopping cart with products
     - editing the shopping cart
     - removing products from the cart
@@ -22,21 +23,22 @@
             - clone the repository
             - open the project in the IDE
             - right‑click on the docker-compose.yml and select “Run docker-compose.yml”
-            - go to the browser at http://localhost:8080/
+            - go to the browser at http://localhost:8082/
             - the application's start page will open
     2. Without an IDE
             - clone the repository
             - run the following Docker commands:
                     - docker compose up --build
-            - go to the browser at http://localhost:8080/
+            - go to the browser at http://localhost:8082/
                 - the application's start page will open
 
 
 ## *RU*
-#### Проект для демонстрации возможностей разработки с использованием Spring Boot на реактивном стеке технологий с разработкой RESTful сервиса, спецификации Open API и организации кэширования через Redis: Spring WebFlux, Spring Data R2DBC, RESTful API, Open API, Spring Data Redis
-#### Технологический стек: Spring Framework, Spring Boot, H2DB, HTML, Thymeleaf, Spring WebFlux, Spring Data R2DBC, Docker (Multi Stage Build), Docker Compose, RESTful API, Open API, Spring Data Redis
+#### Проект для демонстрации возможностей разработки с использованием Spring Boot на реактивном стеке технологий с разработкой RESTful сервиса, спецификации Open API, организации кэширования через Redis и обеспечения безопасности через Spring Security и Keycloak: Spring WebFlux, Spring Data R2DBC, RESTful API, Open API, Spring Data Redis, Spring Security, Keycloak
+#### Технологический стек: Spring Framework, Spring Boot, H2DB, HTML, Thymeleaf, Spring WebFlux, Spring Data R2DBC, Docker (Multi Stage Build), Docker Compose, RESTful API, Open API, Spring Data Redis, Spring Security, Keycloak
 
 ### Возможности приложения:
+    - саморегистрация пользователя
     - наполнение корзины товаров
     - редактирование корзины
     - удаление товаров из корзины
@@ -52,11 +54,11 @@
             - клонировать репозиторий
             - открыть проект в IDE
             - нажать ПКМ на docker-compose.yml и выбрать "Run docker-compose.yml"
-            - зайти в браузер по адресу http://localhost:8080/
+            - зайти в браузер по адресу http://localhost:8082/
             - откроется стартовая страница приложения
     2. Без использования IDE
             - клонировать репозиторий
             - выполнить команды докера:
                     - docker compose up --build
-            - зайти в браузер по адресу http://localhost:8080/
+            - зайти в браузер по адресу http://localhost:8082/
             - откроется стартовая страница приложения

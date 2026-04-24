@@ -8,6 +8,8 @@ import org.pl.service.SessionItemsCountsService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.result.view.Rendering;
@@ -15,6 +17,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.pl.controller.Actions.*;
 
@@ -37,19 +40,16 @@ public class ItemController {
         this.sessionItemsCountsService = sessionItemsCountsService;
     }
 
-    @GetMapping()
-    public Mono<String> redirectToItems() {
-        return Mono.just("redirect:" + itemsAction);
-    }
-
     @GetMapping(itemsAction)
     public Mono<Rendering> getItemsSorted(
+            @AuthenticationPrincipal OAuth2User user,
             @RequestParam(defaultValue = "1") int pageNumber,
             @RequestParam(defaultValue = "5") int pageSize,
             @RequestParam(defaultValue = "NO") String sort,
             @RequestParam(required = false) String search,
             ServerWebExchange exchange
     ) {
+        System.out.println((String) Objects.requireNonNull(user.getAttribute("sub")));
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
 
         return Mono.zip(

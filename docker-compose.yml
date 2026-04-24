@@ -7,6 +7,9 @@ services:
       dockerfile: Dockerfile.payment
     ports:
       - "8081:8081"
+    environment:
+      # Внутренний URL для сервис-к-сервис запросов к Keycloak
+      KEYCLOAK_HOST: http://keycloak-service:8080
     networks:
       - app-network
 
@@ -15,7 +18,14 @@ services:
       context: .
       dockerfile: Dockerfile.web
     ports:
-      - "8080:8080"
+      - "8082:8082"
+    environment:
+      REDIS_HOST: redis-cache-service
+      # Публичный URL для браузера (должен быть доступен извне)
+      KEYCLOAK_PUBLIC_HOST: http://localhost:8080
+      # Внутренний URL для сервис-к-сервис запросов
+      KEYCLOAK_HOST: http://keycloak-service:8080
+      PAYMENT_SERVICE_URL: http://payment-service:8081
     networks:
       - app-network
 
@@ -25,6 +35,15 @@ services:
       dockerfile: Dockerfile.redis-cache
     ports:
       - "6379:6379"
+    networks:
+      - app-network
+
+  keycloak-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.keycloak
+    ports:
+      - "8080:8080"
     networks:
       - app-network
 

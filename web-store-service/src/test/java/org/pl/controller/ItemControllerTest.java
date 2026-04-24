@@ -20,6 +20,15 @@ import static org.mockito.Mockito.when;
 class ItemControllerTest extends ControllerIntegrationTest {
 
     @Test
+    void shouldRedirectToLogin_WhenAccessingItemsWithoutAuth() {
+        unauthenticatedClient().get()
+                .uri("/items")
+                .exchange()
+                .expectStatus().isFound() // Редирект на OAuth2 login
+                .expectHeader().valueMatches("Location", ".*/login.*|.*/oauth2/authorization/.*");
+    }
+
+    @Test
     void getItemsSorted_shouldReturnItemsPageWithChunkedPaging() {
         List<Item> items = List.of(
                 createItem(1L, "Laptop Pro", "img1.jpg", "999.99"),

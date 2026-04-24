@@ -6,6 +6,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Table(name = "orders")
 public class Order {
@@ -18,14 +19,17 @@ public class Order {
     private BigDecimal totalAmount;
     @Column("order_date")
     private LocalDateTime orderDate;
+    @Column("user_id")
+    private UUID userId;
 
     public Order() {
     }
 
-    public Order(String orderNumber, BigDecimal totalAmount, LocalDateTime orderDate) {
+    public Order(String orderNumber, BigDecimal totalAmount, LocalDateTime orderDate, UUID userId) {
         this.orderNumber = orderNumber;
         this.totalAmount = totalAmount;
         this.orderDate = orderDate;
+        this.userId = userId;
     }
 
     public Long getId() {
@@ -50,6 +54,14 @@ public class Order {
 
     public void setTotalAmount(BigDecimal totalAmount) {
         this.totalAmount = totalAmount;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
     }
 
     public LocalDateTime getOrderDate() {

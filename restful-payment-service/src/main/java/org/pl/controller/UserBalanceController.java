@@ -6,6 +6,7 @@ import org.pl.payment_service.server.payment.model.BalanceUpdateRequest;
 import org.pl.service.UserBalanceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+//import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
@@ -20,6 +21,7 @@ class UserBalanceController implements org.pl.payment_service.server.payment.api
     }
 
     @Override
+//    @PreAuthorize("hasAuthority('SERVICE')")
     public ResponseEntity<BalanceResponse> getUserBalance(Long userId) {
         BigDecimal balance = userBalanceService.getUserBalance(userId);
         BalanceResponse balanceResponse = new BalanceResponse();
@@ -29,6 +31,7 @@ class UserBalanceController implements org.pl.payment_service.server.payment.api
     }
 
     @Override
+//    @PreAuthorize("hasAuthority('SERVICE')")
     public ResponseEntity<BalanceResponse> updateUserBalance(
             Long userId,
             BalanceUpdateRequest balanceUpdateRequest

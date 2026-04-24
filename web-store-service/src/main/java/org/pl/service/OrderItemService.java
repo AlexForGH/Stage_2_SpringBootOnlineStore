@@ -14,6 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,8 +35,8 @@ public class OrderItemService {
     }
 
     @Transactional(readOnly = true)
-    public Mono<List<OrderWithItemsDTO>> getOrdersWithItems() {
-        return orderItemRepository.findAllWithAssociations()
+    public Mono<List<OrderWithItemsDTO>> getOrdersWithItems(UUID userId) {
+        return orderItemRepository.findByUserId(userId)
                 .collectList()
                 .flatMap(orderItems -> {
                     // Получаем уникальные order_id и item_id

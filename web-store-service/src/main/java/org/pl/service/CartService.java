@@ -18,6 +18,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class CartService {
@@ -45,7 +46,7 @@ public class CartService {
     }
 
     @Transactional(rollbackFor = {PaymentException.class, RuntimeException.class})
-    public Mono<Order> createSaveOrders(ServerWebExchange exchange) {
+    public Mono<Order> createSaveOrders(ServerWebExchange exchange, UUID userId) {
         System.out.println("Начало создания заказа из всей корзины");
 
         return sessionItemsCountsService.getCartItems(exchange)
@@ -59,7 +60,7 @@ public class CartService {
                     }
 
                     System.out.println("Корзина не пуста, продолжаем обработку");
-                    return processFullCartOrder(cartItems, exchange);
+                    return processFullCartOrder(cartItems, exchange, userId);
                 })
                 .doOnSuccess(order ->
                         System.out.println("Заказ успешно создан, ID: " + order.getId() )
@@ -74,7 +75,7 @@ public class CartService {
     }
 
     @Transactional(rollbackFor = {RuntimeException.class})
-    public Mono<Order> createSaveOrder(Long itemId, ServerWebExchange exchange) {
+    public Mono<Order> createSaveOrder(Long itemId, ServerWebExchange exchange, UUID userId) {
         System.out.println("=== Начало создания заказа для товара ID: " + itemId + " ===");
 
         return sessionItemsCountsService.getCartItems(exchange)
@@ -91,7 +92,7 @@ public class CartService {
                         return Mono.error(new RuntimeException(NEGATIVE_QUANTITY));
                     }
 
-                    return processSingleItemOrder(itemId, quantity, exchange);
+                    return processSingleItemOrder(itemId, quantity, exchange, userId);
                 })
                 .doOnSuccess(order ->
                         System.out.println("Заказ для товара успешно создан, ID: " + order.getId())
@@ -124,8 +125,9 @@ public class CartService {
     /**
      * Запрашивает баланс пользователя у внешнего сервиса
      */
-    private Mono<BigDecimal> getUserBalance() {
-        return defaultApi.getUserBalance(1L)
+    private Mono<BigDecimal> getUserBalance(ServerWebExchange exchange) {
+        return Mono.defer(() -> defaultApi.getUserBalance(1L))
+                .contextWrite(reactor.util.context.Context.of(ServerWebExchange.class, exchange))
                 .map(balanceResponse -> {
                     System.out.println("Текущий баланс пользователя " + balanceResponse.getBalance());
                     return balanceResponse.getBalance();
@@ -135,8 +137,8 @@ public class CartService {
     /**
      * Обновляет баланс пользователя после покупки
      */
-    private Mono<BalanceResponse> updateBalanceAfterPurchase(BigDecimal purchaseAmount) {
-        return getUserBalance()
+    private Mono<BalanceResponse> updateBalanceAfterPurchase(BigDecimal purchaseAmount, ServerWebExchange exchange) {
+        return getUserBalance(exchange)
                 .flatMap(currentBalance -> {
                     BigDecimal newBalance = currentBalance.subtract(purchaseAmount);
 
@@ -152,7 +154,8 @@ public class CartService {
                     System.out.println("Обновление баланса: " + currentBalance +
                             " -> " + newBalance + " (списано: " + purchaseAmount + ")");
 
-                    return defaultApi.updateUserBalance(1L, balanceUpdateRequest)
+                    return Mono.defer(() -> defaultApi.updateUserBalance(1L, balanceUpdateRequest))
+                            .contextWrite(reactor.util.context.Context.of(ServerWebExchange.class, exchange))
                             .doOnSuccess(response ->
                                     System.out.println("Баланс успешно обновлен: " + response.getBalance())
                             )
@@ -190,9 +193,9 @@ public class CartService {
     /**
      * Обработка заказа для всей корзины
      */
-    private Mono<Order> processFullCartOrder(Map<Long, Integer> cartItems, ServerWebExchange exchange) {
+    private Mono<Order> processFullCartOrder(Map<Long, Integer> cartItems, ServerWebExchange exchange, UUID userId) {
         return Mono.zip(
-                        getUserBalance().cache(),
+                        getUserBalance(exchange).cache(),
                         calculateTotalSum(cartItems).cache()
                 )
                 .doOnNext(tuple -> {
@@ -210,7 +213,7 @@ public class CartService {
                     }
 
                     System.out.println("Баланс достаточен, создаем заказ...");
-                    return orderService.createOrder(totalAmount);
+                    return orderService.createOrder(totalAmount, userId);
                 })
                 .flatMap(savedOrder -> {
                     System.out.println("Заказ создан в базе, ID: " + savedOrder.getId());
@@ -222,7 +225,7 @@ public class CartService {
                             )
                             .then(Mono.defer(() -> {
                                 // Обновляем баланс
-                                return updateBalanceAfterPurchase(savedOrder.getTotalAmount())
+                                return updateBalanceAfterPurchase(savedOrder.getTotalAmount(), exchange)
                                         .doOnSuccess(response ->
                                                 System.out.println("Баланс обновлен: " + response.getBalance())
                                         )
@@ -254,9 +257,9 @@ public class CartService {
     /**
      * Обработка заказа для одного товара
      */
-    private Mono<Order> processSingleItemOrder(Long itemId, Integer quantity, ServerWebExchange exchange) {
+    private Mono<Order> processSingleItemOrder(Long itemId, Integer quantity, ServerWebExchange exchange, UUID userId) {
         return Mono.zip(
-                        getUserBalance().cache(),
+                        getUserBalance(exchange).cache(),
                         calculateItemTotal(itemId, quantity).cache()
                 )
                 .doOnNext(tuple -> {
@@ -273,7 +276,7 @@ public class CartService {
                     }
 
                     System.out.println("Баланс достаточен, создаем заказ для товара...");
-                    return orderService.createOrder(itemTotal);
+                    return orderService.createOrder(itemTotal, userId);
                 })
                 .flatMap(savedOrder -> {
                     System.out.println("Заказ создан, ID: " + savedOrder.getId());
@@ -287,7 +290,7 @@ public class CartService {
                             )
                             .then(Mono.defer(() -> {
                                 // Обновляем баланс
-                                return updateBalanceAfterPurchase(savedOrder.getTotalAmount())
+                                return updateBalanceAfterPurchase(savedOrder.getTotalAmount(), exchange)
                                         .doOnSuccess(response ->
                                                 System.out.println("Баланс обновлен: " + response.getBalance())
                                         );
@@ -333,9 +336,10 @@ public class CartService {
             Long itemId,
             Integer quantity,
             BigDecimal totalAmount,
-            ServerWebExchange exchange
+            ServerWebExchange exchange,
+            UUID userId
     ) {
-        return orderService.createOrder(totalAmount)
+        return orderService.createOrder(totalAmount, userId)
                 .doOnNext(order -> System.out.println("Создан заказ на сумму: " + totalAmount))
                 .flatMap(savedOrder -> saveSingleOrderItem(savedOrder, itemId, quantity, exchange));
     }

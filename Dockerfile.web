@@ -35,9 +35,17 @@ WORKDIR /app
 COPY --from=builder /app/web-store-service/target/web-store-service-0.0.1-SNAPSHOT.jar app.jar
 
 # Открываем порт
-EXPOSE 8080
+EXPOSE 8082
+
+# Настройки переменных окружения для Docker
+ENV REDIS_HOST=redis-cache-service
+ENV PAYMENT_SERVICE_URL=http://payment-service:8081
+# Публичный URL для браузера (переопределяется в docker-compose.yml)
+ENV KEYCLOAK_PUBLIC_HOST=http://localhost:8080
+# Внутренний URL для сервис-к-сервис запросов (переопределяется в docker-compose.yml)
+ENV KEYCLOAK_HOST=http://keycloak-service:8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # CMD будет передан как аргументы к ENTRYPOINT
-CMD ["--spring.data.redis.host=redis-cache-service", "--restful.payment.service.url=http://payment-service:8081"]
+# CMD ["--spring.data.redis.host=redis-cache-service", "--restful.payment.service.url=http://payment-service:8081", "--keycloak.host=http://keycloak-service:8080"]

@@ -12,7 +12,8 @@ CREATE TABLE orders (
                         id BIGINT AUTO_INCREMENT PRIMARY KEY,
                         order_number VARCHAR(50) UNIQUE NOT NULL,
                         total_amount DECIMAL(10, 2) NOT NULL,
-                        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        user_id CHAR(36) NOT NULL
 );
 
 -- Таблица элементов заказа
@@ -130,13 +131,14 @@ INSERT INTO items (title, img_path, price, description) VALUES
                                                                 'Игровой монитор LG UltraGear 32" 144 Гц, IPS'
                                                             );
 
--- Заполнение таблицы заказов
-INSERT INTO orders (order_number, total_amount, order_date) VALUES
-                                                                ('ORD-2024-001', 2749.98, '2024-01-15 10:30:00'),
-                                                                ('ORD-2024-002', 349.96,  '2024-01-16 14:45:00'),
-                                                                ('ORD-2024-003', 1799.98, '2024-01-17 09:15:00'),
-                                                                ('ORD-2024-004', 139.98,  '2024-01-18 16:20:00'),
-                                                                ('ORD-2024-005', 1199.98, '2024-01-19 11:00:00');
+-- Заполнение таблицы заказов (UUID)
+INSERT INTO orders (order_number, total_amount, order_date, user_id) VALUES
+                                                                         ('ORD-2024-001', 2749.98, '2024-01-15 10:30:00', '2601e886-290d-47c3-8e95-72eff918ecfd'),
+                                                                         ('ORD-2024-002', 349.96,  '2024-01-16 14:45:00', '2601e886-290d-47c3-8e95-72eff918ecfd'),
+                                                                         ('ORD-2024-003', 1799.98, '2024-01-17 09:15:00', 'a3f1e5c0-1111-2222-3333-444444444444'),
+                                                                         ('ORD-2024-004', 139.98,  '2024-01-18 16:20:00', '2601e886-290d-47c3-8e95-72eff918ecfd'),
+                                                                         ('ORD-2024-005', 1199.98, '2024-01-19 11:00:00', 'b4f2e6d1-5555-6666-7777-888888888888');
+
 
 -- Заполнение таблицы элементов заказа
 INSERT INTO order_items (order_id, item_id, quantity) VALUES

@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.pl</groupId>
-    <artifactId>Stage_2_SpringBootOnlineStore</artifactId>
+    <artifactId>Stage_2_3_SpringBootReactiveWebOnlineStoreWithRESTfulAPIOpenAPIAndRedis</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Stage_2_SpringBootOnlineStore</name>
+    <name>Stage_2_3_SpringBootReactiveWebOnlineStoreWithRESTfulAPIOpenAPIAndRedis</name>
 
     <modules>
         <module>web-store-service</module>

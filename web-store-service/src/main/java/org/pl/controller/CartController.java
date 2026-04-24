@@ -3,6 +3,8 @@ package org.pl.controller;
 import org.pl.exception.*;
 import org.pl.service.CartService;
 import org.pl.service.SessionItemsCountsService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +14,8 @@ import org.springframework.web.reactive.result.view.Rendering;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
+
+import java.util.Objects;
 
 import static org.pl.controller.Actions.*;
 
@@ -87,10 +91,11 @@ public class CartController {
     }
 
     @PostMapping(value = buyAction)
-    public Mono<String> buyItems(ServerWebExchange exchange) {
+    public Mono<String> buyItems(ServerWebExchange exchange, @AuthenticationPrincipal OAuth2User user) {
         return exchange.getSession()
                 .flatMap(session -> {
-                    return cartService.createSaveOrders(exchange)
+                    String UUID = Objects.requireNonNull(user.getAttribute("sub"), "User sub is null");
+                    return cartService.createSaveOrders(exchange, java.util.UUID.fromString(UUID))
                             .flatMap(savedOrder -> {
                                 session.getAttributes().put("toastMessage",
                                         "Заказ №" + savedOrder.getOrderNumber() + " успешно оформлен!");
@@ -111,11 +116,13 @@ public class CartController {
     @PostMapping(value = buyAction + "/{id}")
     public Mono<String> buyItem(
             @PathVariable Long id,
-            ServerWebExchange exchange
+            ServerWebExchange exchange,
+            @AuthenticationPrincipal OAuth2User user
     ) {
         return exchange.getSession()
                 .flatMap(session -> {
-                    return cartService.createSaveOrder(id, exchange)
+                    String UUID = Objects.requireNonNull(user.getAttribute("sub"), "User sub is null");
+                    return cartService.createSaveOrder(id, exchange, java.util.UUID.fromString(UUID))
                             .flatMap(savedOrder -> {
                                 session.getAttributes().put("toastMessage",
                                         "Заказ №" + savedOrder.getOrderNumber() + " успешно оформлен!");

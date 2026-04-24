@@ -1,6 +1,8 @@
 package org.pl.controller;
 
 import org.pl.service.OrderItemService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.reactive.result.view.Rendering;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+
+import java.util.Objects;
 
 import static org.pl.controller.Actions.itemsAction;
 import static org.pl.controller.Actions.ordersAction;
@@ -23,8 +27,9 @@ public class OrderController {
     }
 
     @GetMapping(ordersAction)
-    public Mono<Rendering> getOrders() {
-        return orderItemService.getOrdersWithItems()
+    public Mono<Rendering> getOrders(@AuthenticationPrincipal OAuth2User user) {
+        String UUID = Objects.requireNonNull(user.getAttribute("sub"), "User sub is null");
+        return orderItemService.getOrdersWithItems(java.util.UUID.fromString(UUID))
                 .map(ordersWithItems -> Rendering.view("orders")
                         .modelAttribute("ordersWithItems", ordersWithItems)
                         .modelAttribute("itemsAction", itemsAction)
